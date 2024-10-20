@@ -18,4 +18,4 @@ echo "[$DATE] Peer ID: $PEER_ID, Balance: $BALANCE, Hostname: $HOSTNAME" >> $LOG
 # Send the data to the Flask server
 curl -X POST -H "Content-Type: application/json" \
 -d "{\"peer_id\":\"$PEER_ID\", \"balance\":\"$BALANCE\", \"timestamp\":\"$DATE\", \"hostname\":\"$HOSTNAME\"}" \
-http://192.168.20.201:5000/update_balance >> $LOG_FILE 2>&1
+http://192.168.20.210:5000/update_balance >> $LOG_FILE 2>&1
