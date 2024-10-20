@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Node Balances and Metrics</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <!-- Dark Mode Fix -->
+    <script>
+        (function() {
+            const nightMode = localStorage.getItem('nightMode');
+            if (nightMode === 'on') {
+                document.documentElement.classList.add('night-mode');
+            }
+        })();
+    </script>
+
+    <style>
+        body {
+            background-color: #f0f0f0;
+            color: #333;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .gradient-text {
+            font-size: 36px;
+            font-weight: bold;
+            background: linear-gradient(90deg, #42275a, #734b6d, #734b6d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #42275a;
+            color: white;
+        }
+
+        footer {
+            margin-top: 30px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .wallets {
+            margin-top: 20px;
+        }
+
+        .wallets .wallet-address {
+            font-weight: bold;
+        }
+
+        .wallets p {
+            margin: 10px 0;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 34px;
+            height: 20px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 12px;
+            width: 12px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+        }
+
+        input:checked + .slider {
+            background-color: #42275a;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(14px);
+        }
+
+        .slider.round {
+            border-radius: 34px;
+        }
+
+        .slider.round:before {
+            border-radius: 50%;
+        }
+
+        body.night-mode {
+            background-color: #000;
+            color: #fff;
+        }
+
+        body.night-mode .gradient-text {
+            background: linear-gradient(90deg, #42275a, #734b6d, #734b6d);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        body.night-mode th {
+            background-color: #42275a;
+        }
+
+        footer.night-mode {
+            color: #666;
+        }
+    </style>
+
+    <script>
+        function toggleNightMode() {
+            const body = document.body;
+            body.classList.toggle('night-mode');
+
+            const nightMode = body.classList.contains('night-mode') ? 'on' : 'off';
+            localStorage.setItem('nightMode', nightMode);
+        }
+
+        function toggleAutoRefresh() {
+            autoRefresh = !autoRefresh;
+        }
+
+        let autoRefresh = true;
+        setInterval(() => {
+            if (autoRefresh) {
+                window.location.reload();
+            }
+        }, 75000);
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const nightMode = urlParams.get('night_mode');
+            if (nightMode === 'on') {
+                document.body.classList.add('night-mode');
+            }
+
+            document.querySelectorAll('.node-input').forEach(input => {
+                const savedValue = localStorage.getItem(input.id);
+                if (savedValue) {
+                    input.value = savedValue;
+                }
+
+                input.addEventListener('input', () => {
+                    localStorage.setItem(input.id, input.value);
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1 class="gradient-text">Total Quil Across All Peers: {{ total_balance }} Quil</h1>
+
+    <h1 class="gradient-text">Current wQUIL Price: ${{ "{:.4f}".format(wquil_price) }}</h1>
+
+    <div style="text-align: right; margin-bottom: 20px;">
+        <label for="nightMode">Night Mode</label>
+        <label class="switch">
+            <input type="checkbox" id="nightMode" {% if night_mode == 'on' %}checked{% endif %} onclick="toggleNightMode()">
+            <span class="slider round"></span>
+        </label>
+
+        <label for="autoRefresh" style="margin-left: 20px;">Auto Refresh</label>
+        <label class="switch">
+            <input type="checkbox" id="autoRefresh" checked onclick="toggleAutoRefresh()">
+            <span class="slider round"></span>
+        </label>
+    </div>
+
+    <h1 class="gradient-text">Node Statistics</h1>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 5%;">Node</th>
+                <th>Peer ID</th>
+                <th>Hostname</th> <!-- Added this line -->
+                <th>Quil Balance</th>
+                <th>Quil Per Minute</th>
+                <th>Quil Per Hour</th>
+                <th>24-Hour Quil Per Hour</th>
+                <th>24-Hour Quil Per Day</th>
+                <th>$ Per Hour</th>
+                <th>$ Per Day</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in table_data %}
+            <tr>
+                <td><input type="text" class="node-input" id="node-{{ loop.index }}" placeholder="Enter Node Name"></td>
+                <td>{{ row['Peer ID'] }}</td>
+                <td>{{ row['Hostname'] }}</td> <!-- Ensure this is included -->
+                <td>{{ "{:.4f}".format(row['Balance'] | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(row['Quil Per Minute'] | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(row['Quil Per Hour'] | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(row['24-Hour Quil Per Hour'] | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(row['24-Hour Quil Per Day'] | default(0.0)) }}</td>
+                <td>${{ "{:.4f}".format(row['$ Per Hour'] | default(0.0)) }}</td>
+                <td>${{ "{:.4f}".format(row['$ Per Day'] | default(0.0)) }}</td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td>Total</td>
+                <td></td>
+                <td></td> <!-- Keep this empty for total row -->
+                <td>{{ "{:.4f}".format(total_quil_balance | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(total_quil_per_minute | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(total_quil_per_hour | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(total_24_hour_quil_per_hour | default(0.0)) }}</td>
+                <td>{{ "{:.4f}".format(total_24_hour_quil_per_day | default(0.0)) }}</td>
+                <td>${{ "{:.4f}".format(total_dollar_per_hour | default(0.0)) }}</td>
+                <td>${{ "{:.4f}".format(total_dollar_per_day | default(0.0)) }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h1 class="gradient-text">Node Balances Over Time</h1>
+    <div>{{ balance_graph_html | safe }}</div>
+
+    <h1 class="gradient-text">Quil Earned Per Minute</h1>
+    <div>{{ quil_minute_graph_html | safe }}</div>
+
+    <h1 class="gradient-text">Earnings Per Hour in USD</h1>
+    <div>{{ earnings_per_hour_graph_html | safe }}</div>
+
+    <h1 class="gradient-text">Hourly Growth in Quil</h1>
+    <div>{{ hourly_growth_graph_html | safe }}</div>
+</body>
+</html>
