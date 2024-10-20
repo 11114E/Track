@@ -1,0 +1,44 @@
+<table>
+    <thead>
+        <tr>
+            <th style="width: 5%;">Node</th>
+            <th>Peer ID</th>
+            <th>Hostname</th> <!-- Ensure this is present -->
+            <th>Quil Balance</th>
+            <th>Quil Per Minute</th>
+            <th>Quil Per Hour</th>
+            <th>24-Hour Quil Per Hour</th>
+            <th>24-Hour Quil Per Day</th>
+            <th>$ Per Hour</th>
+            <th>$ Per Day</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in table_data %}
+        <tr>
+            <td><input type="text" class="node-input" id="node-{{ loop.index }}" placeholder="Enter Node Name"></td>
+            <td>{{ row['Peer ID'] }}</td>
+            <td>{{ row['Hostname'] }}</td> <!-- Hostname displayed here -->
+            <td>{{ "{:.4f}".format(row['Balance'] | default(0.0)) }}</td>
+            <td>{{ "{:.4f}".format(row['Quil Per Minute'] | default(0.0)) }}</td>
+            <td>{{ "{:.4f}".format(row['Quil Per Hour'] | default(0.0)) }}</td>
+            <td>{{ "{:.4f}".format(row['24-Hour Quil Per Hour'] | default(0.0)) }}</td>
+            <td>{{ "{:.4f}".format(row['24-Hour Quil Per Day'] | default(0.0)) }}</td>
+            <td>${{ "{:.4f}".format(row['$ Per Hour'] | default(0.0)) }}</td>
+            <td>${{ "{:.4f}".format(row['$ Per Day'] | default(0.0)) }}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+            <td>Total</td>
+            <td></td>
+            <td></td> <!-- Keep this empty for total row -->
+            <td>{{ "{:.4f}".format(total_quil_balance | default(0.0)) }}</td>
+            <td>{{ "{:.4f}".format(total_quil_per_minute | default(0.0)) }}</td>
+            <td>{{ "{:.4f}".format(total_quil_per_hour | default(0.0)) }}</td>
+            <td>{{ "{:.4f}".format(total_24_hour_quil_per_hour | default(0.0)) }}</td>
+            <td>{{ "{:.4f}".format(total_24_hour_quil_per_day | default(0.0)) }}</td>
+            <td>${{ "{:.4f}".format(total_dollar_per_hour | default(0.0)) }}</td>
+            <td>${{ "{:.4f}".format(total_dollar_per_day | default(0.0)) }}</td>
+        </tr>
+    </tbody>
+</table>
